@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interaktiv Savollar</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+
+        .wheel-container {
+            position: relative;
+        }
+
+        .wheel {
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            border: 5px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: conic-gradient(red 0deg 30deg,
+                    blue 30deg 60deg,
+                    green 60deg 90deg,
+                    yellow 90deg 120deg,
+                    orange 120deg 150deg,
+                    purple 150deg 180deg,
+                    cyan 180deg 210deg,
+                    pink 210deg 240deg,
+                    lime 240deg 270deg,
+                    violet 270deg 300deg,
+                    gold 300deg 330deg,
+                    brown 330deg 360deg);
+            transition: transform 3s ease-out;
+            box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            box-shadow: 4px 4px 15px rgba(0, 0, 0, 0.3);
+            transition: 0.3s;
+        }
+
+        .button:hover {
+            background-color: #ddd;
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            text-align: center;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -60%); }
+            to { opacity: 1; transform: translate(-50%, -50%); }
+        }
+
+        .modal button {
+            margin-top: 10px;
+            padding: 10px 15px;
+            border: none;
+            background: #007BFF;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: 0.3s;
+        }
+
+        .modal button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wheel-container">
+        <div class="wheel" id="wheel"></div>
+        <button class="button" onclick="spinWheel()">🎡</button>
+    </div>
+    <div class="modal" id="modal">
+        <p id="question-text"></p>
+        <button onclick="closeModal()">OK</button>
+    </div>
+    <audio id="spinSound" src="https://www.fesliyanstudios.com/play-mp3/4385"></audio>
+    <script>
+        const questions = [
+            "Sevimli rangingiz qanday?",
+            "Sizning sevimli mashg'ulotingiz nima?",
+            "Sevimli filmlaringiz qaysilar?",
+            "Eng katta qo'rquvingiz nima?",
+            "Sizni nima baxtli qiladi?",
+            "Sevimli kitobingiz qaysi?",
+            "Agar sizda bitta super kuch bo'lsa, u qanday bo'lardi?",
+            "Sevimli ta’til manzilingiz qaysi?",
+            "Sevimli ovqatingiz nima?",
+            "Bolalikdagi eng yaxshi xotirangiz qaysi?",
+            "Sevimli qo'shig'ingiz qaysi?",
+            "Agar siz istalgan mashhur inson bilan uchrashsangiz, kim bo'lardi?",
+            "Sizning yashirin talantingiz nima?",
+            "Hayotdagi eng katta maqsadingiz nima?",
+            "Orzuingizdagi kasb qaysi?",
+            "Agar istalgan joyga sayohat qila olsangiz, qayerga borardingiz?",
+            "Siz bilan eng qiziq voqea qachon sodir bo'lgan?",
+            "Orzuingizdagi mashina qaysi?",
+            "O'zingizda eng yaxshi ko'rgan narsangiz nima?",
+            "Agar siz istalgan davrda yashash imkoniga ega bo'lsangiz, qaysi birini tanlardingiz?",
+            "Hozirgacha erishgan eng katta yutug'ingiz nima?",
+            "Maktabdagi eng sevimli faningiz qaysi?",
+            "Agar lotereyada yutsangiz, birinchi nima qilardingiz?",
+            "Qaysi turdagi musiqani yoqtirasiz?",
+            "Agar vaqt mashinasi bo‘lsa, qaysi davrga borardingiz?",
+            "Sizga eng yoqadigan fasl qaysi va nega?",
+            "Sevimli sport turi yoki jamoangiz qaysi?",
+            "Qanday yangi til o‘rganishni xohlaysiz?",
+            "Siz uchun do‘stlikning eng muhim jihati nima?",
+            "O‘zgarish imkoniyati bo‘lsa, hayotingizdagi nimani o‘zgartirgan bo‘lardingiz?",
+            "Kelajakda qanday texnologiyalarni ko‘rishni xohlaysiz?",
+            "Qaysi tarixiy shaxs bilan uchrashishni xohlardingiz?",
+            "Dunyodagi eng go‘zal joy deb qaysini hisoblaysiz?",
+            "Agar bir kun davomida mashhur bo‘lsangiz, nima qilardingiz?",
+            "Hayotingiz haqida film ishlansa, sizni kim o‘ynashini xohlaysiz?",
+            "Besh yil ichida o‘zingizni qayerda ko‘rasiz?",
+            "Qaysi super qahramon bo‘lishni xohlardingiz?",
+            "Bolaligingizdagi eng katta orzuingiz nima edi?",
+            "O‘zingiz haqingizda odamlar bilmagan bitta faktni ayting?",
+            "Agar siz bitta hayvon bo‘lsangiz, qaysi biri bo‘lardingiz va nega?"
+        ];
+
+
+        let rotation = 0;
+
+        function spinWheel() {
+            const wheel = document.getElementById("wheel");
+            const sound = document.getElementById("spinSound");
+            const randomDegree = Math.floor(1800 + Math.random() * 360);
+            rotation += randomDegree;
+            wheel.style.transform = `rotate(${rotation}deg)`;
+            sound.play();
+
+            setTimeout(() => {
+                const selectedIndex = Math.floor(((rotation % 360) / 45));
+                const selectedQuestion = questions[selectedIndex];
+                document.getElementById("question-text").textContent = "Savol: " + selectedQuestion;
+                document.getElementById("modal").style.display = "block";
+            }, 3000);
+        }
+
+        function closeModal() {
+            document.getElementById("modal").style.display = "none";
+        }
+    </script>
+</body>
+
+</html>
